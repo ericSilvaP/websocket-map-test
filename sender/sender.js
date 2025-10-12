@@ -10,7 +10,7 @@ websocket.addEventListener('close', () =>
 )
 
 sendButton.addEventListener('click', () => {
-  sendCoordinates()
+  sendCoordinates(websocket)
 })
 
 function connectSender() {
@@ -19,34 +19,30 @@ function connectSender() {
   })
 }
 
-function getCoordinates(callback) {
-  if ('geolocation' in navigator) {
+function getCoordinates() {
+  return new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)) {
+      reject('Geolocalização não suportada.')
+    }
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        callback({
+      (pos) =>
+        resolve({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
-        })
-      },
-      (err) => {
-        alert('Erro ao obter localização:' + err.message)
-      }
+        }),
+      (err) => reject('Erro ao obter localização:' + err.message)
     )
-  } else {
-    alert('Geolocalização não suportada.')
-  }
+  })
 }
 
-function sendCoordinates() {
-  getCoordinates((pos) => {
-    websocketConnectionIsOpen((isOpen) => {
-      if (isOpen) {
-        websocket.send(JSON.stringify(pos))
-      } else {
-        console.log('User not connected.')
-      }
-    })
-  })
+async function sendCoordinates(websocket) {
+  try {
+    const pos = await getCoordinates()
+    if (websocketConnectionIsOpen(websocket))
+      websocket.send(JSON.stringify(pos))
+  } catch (err) {
+    alert(err)
+  }
 }
 
 function websocketConnectionIsOpen(websocket) {
