@@ -2,9 +2,33 @@ const websocket = new WebSocket('ws://localhost:5679/')
 const sendButton = document.querySelector('.send-button')
 const connectionStateDiv = document.querySelector('.connection-state')
 
-websocket.addEventListener('open', () =>
+let latestPosition = null
+// websocket.addEventListener('open', () =>
+//   updateConnectionState(websocket, connectionStateDiv)
+// )
+
+websocket.addEventListener('open', () => {
+  connectSender()
   updateConnectionState(websocket, connectionStateDiv)
-)
+
+  if ('geolocation' in navigator) {
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        latestPosition = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        }
+        websocket.send(JSON.stringify(latestPosition))
+      },
+      (err) => {
+        console.log('Erro ao obter localização: ' + err)
+      }
+    )
+  } else {
+    console.log('Navegador não suporta geolocalização!')
+  }
+})
+
 websocket.addEventListener('close', () =>
   updateConnectionState(websocket, connectionStateDiv)
 )
@@ -14,32 +38,17 @@ sendButton.addEventListener('click', () => {
 })
 
 function connectSender() {
-  websocket.addEventListener('open', () => {
-    websocket.send(JSON.stringify({ type: 'sender' }))
-  })
+  websocket.send(JSON.stringify({ type: 'sender' }))
 }
 
-function getCoordinates() {
-  return new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) {
-      reject('Geolocalização não suportada.')
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        resolve({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        }),
-      (err) => reject('Erro ao obter localização:' + err.message)
-    )
-  })
-}
-
-async function sendCoordinates(websocket) {
+function sendCoordinates(websocket) {
   try {
-    const pos = await getCoordinates()
+    if (!latestPosition) {
+      console.log('Aguarde uma posição ser armazenada.')
+      return
+    }
     if (websocketConnectionIsOpen(websocket))
-      websocket.send(JSON.stringify(pos))
+      websocket.send(JSON.stringify(latestPosition))
   } catch (err) {
     alert(err)
   }
@@ -56,5 +65,3 @@ function updateConnectionState(websocket, div) {
     div.textContent = `Desconectado ❌`
   }
 }
-
-document.addEventListener('DOMContentLoaded', connectSender)
