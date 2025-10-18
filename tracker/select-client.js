@@ -16,10 +16,9 @@ websocket.addEventListener('open', () => {
   websocket.send(JSON.stringify({ type: 'tracker', action: 'get_senders' }))
 })
 
-// websocket.onmessage = ({ data }) => {
-//   const data = JSON.parse(data)
-//   alert(data.senders)
-// }
+websocket.onmessage = ({ data }) => {
+  const senders = JSON.parse(data)
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const clientsContainer = document.querySelector('.clients-container')
