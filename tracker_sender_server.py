@@ -17,9 +17,11 @@ async def handler(websocket):
     try:
         async for message in websocket:
             data = json.loads(message)
+            sender_id = None
             print(data)
 
             if data.get("type") == "sender":
+                # conecta quem envia localização
                 sender_instance = Sender(websocket)
                 SENDERS.append(sender_instance)
                 senders_wb.add(websocket)
@@ -27,9 +29,11 @@ async def handler(websocket):
                 continue
 
             if data.get("type") == "tracker":
+                # conecta quem recebe localização
                 TRACKERS.add(websocket)
                 print("Tracker connected!\n")
 
+                # obtém ids de todos os rastreados
                 if data.get("action") == "get_senders":
                     senders_list = list(range(len(SENDERS)))
                     print("get_senders:" + json.dumps({"senders": senders_list}))
@@ -39,14 +43,16 @@ async def handler(websocket):
                     else:
                         print("No active senders.\n")
 
+                # liga rastreador e rastreado
                 if data.get("action") == "connect_to_sender":
-                    sender_id = data.get("sender_id")
-                    sender = SENDERS[sender_id]
-
-                    sender.trackers_connected.add(websocket)
-                    print(f" Tracker conectado ao sender {sender_id}\n")
+                    sender_id = int(data.get("sender_id"))
+                    if sender_id in list(range(len(SENDERS))):
+                        sender = SENDERS[sender_id]
+                        sender.trackers_connected.add(websocket)
+                        print(f" Tracker conectado ao sender {sender_id}\n")
                 continue
 
+            # pega a localização e compartilha com todos os rastreadores conectados
             if "lat" in data and "lng" in data and websocket in senders_wb:
                 try:
                     for i, sender_instance in enumerate(SENDERS):
@@ -56,12 +62,16 @@ async def handler(websocket):
                 except ValueError:
                     print("Sender not connected")
                     continue
-                payload = {
-                    "lat": data["lat"],
-                    "lng": data["lng"],
-                }
-                print("Broadcasting coords:", payload, "\n")
-                broadcast(SENDERS[sender_id].trackers_connected, json.dumps(payload))
+
+                if sender_id is not None:
+                    payload = {
+                        "lat": data["lat"],
+                        "lng": data["lng"],
+                    }
+                    print("Broadcasting coords:", payload, "\n")
+                    broadcast(
+                        SENDERS[sender_id].trackers_connected, json.dumps(payload)
+                    )
 
     finally:
         # Remove conexão ao desconectar

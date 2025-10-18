@@ -1,11 +1,12 @@
 const websocket = new WebSocket('ws://localhost:5679/')
+const clientsContainer = document.querySelector('.clients-container')
 
-function createClient() {
+function createClient(id) {
   const clientElement = document.createElement('div')
   const clientLink = document.createElement('a')
 
   clientElement.classList.add('client')
-  clientLink.href = '#'
+  clientLink.href = `tracker.html?id=${id}`
   clientLink.classList.add('client-link')
   clientLink.textContent = 'Selecionar cliente'
   clientElement.appendChild(clientLink)
@@ -17,13 +18,9 @@ websocket.addEventListener('open', () => {
 })
 
 websocket.onmessage = ({ data }) => {
-  const senders = JSON.parse(data)
+  const message = JSON.parse(data)
+  const ids = message.senders
+  for (const id of ids) {
+    clientsContainer.appendChild(createClient(id))
+  }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const clientsContainer = document.querySelector('.clients-container')
-
-  clientsContainer.appendChild(createClient())
-  clientsContainer.appendChild(createClient())
-  clientsContainer.appendChild(createClient())
-})
