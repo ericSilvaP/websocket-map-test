@@ -14,13 +14,16 @@ function createClient(id) {
 }
 
 websocket.addEventListener('open', () => {
-  websocket.send(JSON.stringify({ type: 'tracker', action: 'get_senders' }))
+  websocket.send(JSON.stringify({ type: 'select_sender' }))
 })
 
 websocket.onmessage = ({ data }) => {
   const message = JSON.parse(data)
-  const ids = message.senders
-  for (const id of ids) {
-    clientsContainer.appendChild(createClient(id))
+  const senders_id = message.senders
+  if (senders_id) {
+    clientsContainer.innerHTML = ''
+    for (const id of senders_id) {
+      clientsContainer.appendChild(createClient(id))
+    }
   }
 }

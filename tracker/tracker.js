@@ -15,7 +15,6 @@ websocket.addEventListener('open', () => {
   websocket.send(
     JSON.stringify({
       type: 'tracker',
-      action: 'connect_to_sender',
       sender_id: senderId,
     })
   )

@@ -3,8 +3,22 @@ import json
 from websockets.asyncio.server import serve, broadcast
 
 TRACKERS = set()
+SELECT_SENDER = set()
 SENDERS = []
-senders_wb = set()
+SENDERS_WB = set()
+
+
+def getSendersId():
+    return list(range(len(SENDERS)))
+
+
+def updateSelectList():
+    senders_ids_list = getSendersId()
+    if senders_ids_list:
+        broadcast(SELECT_SENDER, json.dumps({"senders": senders_ids_list}))
+        print("Lista de senders enviada:", senders_ids_list, "\n")
+    else:
+        print("No active senders.\n")
 
 
 class Sender:
@@ -24,8 +38,19 @@ async def handler(websocket):
                 # conecta quem envia localização
                 sender_instance = Sender(websocket)
                 SENDERS.append(sender_instance)
-                senders_wb.add(websocket)
+                SENDERS_WB.add(websocket)
                 print(f"Sender number {len(SENDERS)} connected!\n")
+
+                # atualiza a lista de conexões
+                updateSelectList()
+                continue
+
+            if data.get("type") == "select_sender":
+                # conecta quem seleciona o sender
+                SELECT_SENDER.add(websocket)
+                print(f"Selecter number {len(SENDERS)} connected!\n")
+                # atualiza a lista de conexões
+                updateSelectList()
                 continue
 
             if data.get("type") == "tracker":
@@ -33,27 +58,19 @@ async def handler(websocket):
                 TRACKERS.add(websocket)
                 print("Tracker connected!\n")
 
-                # obtém ids de todos os rastreados
-                if data.get("action") == "get_senders":
-                    senders_list = list(range(len(SENDERS)))
-                    print("get_senders:" + json.dumps({"senders": senders_list}))
-                    if senders_list:
-                        await websocket.send(json.dumps({"senders": senders_list}))
-                        print("Lista de senders enviada:", senders_list, "\n")
-                    else:
-                        print("No active senders.\n")
-
                 # liga rastreador e rastreado
-                if data.get("action") == "connect_to_sender":
+                try:
                     sender_id = int(data.get("sender_id"))
                     if sender_id in list(range(len(SENDERS))):
                         sender = SENDERS[sender_id]
                         sender.trackers_connected.add(websocket)
-                        print(f" Tracker conectado ao sender {sender_id}\n")
+                        print(f"tracker connected to the sender {sender_id}\n")
+                except ValueError:
+                    print("Error converting id")
                 continue
 
             # pega a localização e compartilha com todos os rastreadores conectados
-            if "lat" in data and "lng" in data and websocket in senders_wb:
+            if "lat" in data and "lng" in data and websocket in SENDERS_WB:
                 try:
                     for i, sender_instance in enumerate(SENDERS):
                         if sender_instance.websocket is websocket:
@@ -64,22 +81,24 @@ async def handler(websocket):
                     continue
 
                 if sender_id is not None:
-                    payload = {
+                    coords = {
                         "lat": data["lat"],
                         "lng": data["lng"],
                     }
-                    print("Broadcasting coords:", payload, "\n")
-                    broadcast(
-                        SENDERS[sender_id].trackers_connected, json.dumps(payload)
-                    )
+                    print("Broadcasting coords:", coords, "\n")
+                    broadcast(SENDERS[sender_id].trackers_connected, json.dumps(coords))
 
     finally:
         # Remove conexão ao desconectar
-        senders_wb.discard(websocket)
+        SENDERS_WB.discard(websocket)
         for sender in SENDERS:
             if sender.websocket is websocket:
                 SENDERS.remove(sender)
         TRACKERS.discard(websocket)
+        SELECT_SENDER.discard(websocket)
+
+        # atualiza a lista de conexões
+        updateSelectList()
 
 
 async def main():
