@@ -2,12 +2,15 @@ import asyncio
 import json
 from websockets.asyncio.server import serve, broadcast
 
-USERS = {
-    "trackers": set(),
-    "senders": set(),
-}
 TRACKERS = set()
-SENDERS = set()
+SENDERS = []
+senders_wb = set()
+
+
+class Sender:
+    def __init__(self, websocket):
+        self.websocket = websocket
+        self.trackers_connected = set()
 
 
 async def handler(websocket):
@@ -17,22 +20,56 @@ async def handler(websocket):
             print(data)
 
             if data.get("type") == "sender":
-                USERS["senders"].add(websocket)
-                print("Sender connected!")
+                sender_instance = Sender(websocket)
+                SENDERS.append(sender_instance)
+                senders_wb.add(websocket)
+                print(f"Sender number {len(SENDERS)} connected!\n")
                 continue
 
             if data.get("type") == "tracker":
-                USERS["trackers"].add(websocket)
-                print("Tracker connected!")
+                TRACKERS.add(websocket)
+                print("Tracker connected!\n")
+
+                if data.get("action") == "get_senders":
+                    senders_list = list(range(len(SENDERS)))
+                    print("get_senders:" + json.dumps({"senders": senders_list}))
+                    if senders_list:
+                        await websocket.send(json.dumps({"senders": senders_list}))
+                        print("Lista de senders enviada:", senders_list, "\n")
+                    else:
+                        print("No active senders.\n")
+
+                if data.get("action") == "connect_to_sender":
+                    sender_id = data.get("sender_id")
+                    sender = SENDERS[sender_id]
+
+                    sender.trackers_connected.add(websocket)
+                    print(f" Tracker conectado ao sender {sender_id}\n")
                 continue
 
-            if data.get("lat") and data.get("lng"):
-                print("Sended coord!", data)
-                broadcast(USERS["trackers"], json.dumps(data))
+            if "lat" in data and "lng" in data and websocket in senders_wb:
+                try:
+                    for i, sender_instance in enumerate(SENDERS):
+                        if sender_instance.websocket is websocket:
+                            sender_id = i
+                            break
+                except ValueError:
+                    print("Sender not connected")
+                    continue
+                payload = {
+                    "lat": data["lat"],
+                    "lng": data["lng"],
+                }
+                print("Broadcasting coords:", payload, "\n")
+                broadcast(SENDERS[sender_id].trackers_connected, json.dumps(payload))
+
     finally:
         # Remove conexão ao desconectar
-        USERS["senders"].discard(websocket)
-        USERS["trackers"].discard(websocket)
+        senders_wb.discard(websocket)
+        for sender in SENDERS:
+            if sender.websocket is websocket:
+                SENDERS.remove(sender)
+        TRACKERS.discard(websocket)
 
 
 async def main():
