@@ -1,6 +1,8 @@
 const websocket = new WebSocket('ws://localhost:5679/')
 let map = L.map('map').setView([51.505, -0.09], 13)
-var marker = L.marker([51.5, -0.09]).addTo(map)
+let marker = L.marker([51.5, -0.09]).addTo(map)
+const params = new URLSearchParams(window.location.search)
+const senderId = params.get('id')
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -10,7 +12,12 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 websocket.addEventListener('open', () => {
   // Identifica como visualizador
-  websocket.send(JSON.stringify({ type: 'tracker' }))
+  websocket.send(
+    JSON.stringify({
+      type: 'tracker',
+      sender_id: senderId,
+    })
+  )
   map('map').setView([51.505, -0.09], 13)
 })
 

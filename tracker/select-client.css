@@ -1,0 +1,22 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  margin: 50px 0;
+}
+
+.clients-container {
+  display: grid;
+  gap: 3px;
+  grid-template-columns: repeat(autofit, minmax(100%, 1fr));
+}
+
+.client {
+  padding: 10px;
+  max-width: fit-content;
+  background-color: rgb(180, 176, 176);
+}
