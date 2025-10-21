@@ -1,37 +1,40 @@
-const websocket = new WebSocket('ws://localhost:5679/')
+let websocket = null
 const sendButton = document.querySelector('.send-button')
 const connectionStateDiv = document.querySelector('.connection-state')
+const RECONNECT_INTERVAL = 2000
 
 let latestPosition = null
-// websocket.addEventListener('open', () =>
-//   updateConnectionState(websocket, connectionStateDiv)
-// )
 
-websocket.addEventListener('open', () => {
-  connectSender()
-  updateConnectionState(websocket, connectionStateDiv)
+function connectWebsocket(interval) {
+  websocket = new WebSocket('ws://localhost:5679/')
 
-  if ('geolocation' in navigator) {
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        latestPosition = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+  websocket.addEventListener('open', () => {
+    connectSender()
+    updateConnectionState(websocket, connectionStateDiv)
+
+    if ('geolocation' in navigator) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          latestPosition = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          }
+          websocket.send(JSON.stringify(latestPosition))
+        },
+        (err) => {
+          console.log('Erro ao obter localização: ' + err)
         }
-        websocket.send(JSON.stringify(latestPosition))
-      },
-      (err) => {
-        console.log('Erro ao obter localização: ' + err)
-      }
-    )
-  } else {
-    console.log('Navegador não suporta geolocalização!')
-  }
-})
+      )
+    } else {
+      console.log('Navegador não suporta geolocalização!')
+    }
+  })
 
-websocket.addEventListener('close', () =>
-  updateConnectionState(websocket, connectionStateDiv)
-)
+  websocket.addEventListener('close', () => {
+    updateConnectionState(websocket, connectionStateDiv)
+    setTimeout(connectWebsocket, interval)
+  })
+}
 
 sendButton.addEventListener('click', () => {
   sendCoordinates(websocket)
@@ -65,3 +68,5 @@ function updateConnectionState(websocket, div) {
     div.textContent = `Desconectado ❌`
   }
 }
+
+connectWebsocket()

@@ -94,11 +94,11 @@ async def handler(websocket):
         for sender in SENDERS:
             if sender.websocket is websocket:
                 SENDERS.remove(sender)
+                updateSelectList()
         TRACKERS.discard(websocket)
         SELECT_SENDER.discard(websocket)
 
         # atualiza a lista de conexões
-        updateSelectList()
 
 
 async def main():
