@@ -31,9 +31,13 @@ function connectWebsocket(interval) {
   websocket.onmessage = ({ data }) => {
     const message = JSON.parse(data)
     clientsContainer.innerHTML = ''
-    for (const index in message) {
-      let product = message[index]
-      clientsContainer.appendChild(createClient(product.id_list))
+
+    const id_list = message.id_list
+    const names_list = message.names_list
+    for (const index in id_list) {
+      const id = id_list[index]
+      const name = names_list[index]
+      clientsContainer.appendChild(createClient(id, name))
     }
   }
 
