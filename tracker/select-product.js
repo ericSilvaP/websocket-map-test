@@ -2,14 +2,20 @@ let websocket = null
 const clientsContainer = document.querySelector('.clients-container')
 const RECONNECT_INTERVAL = 2000
 
-function createClient(id) {
+function createClient(id, name = '') {
   const clientElement = document.createElement('div')
   const clientLink = document.createElement('a')
 
   clientElement.classList.add('client')
   clientLink.href = `tracker.html?id=${id}`
   clientLink.classList.add('client-link')
-  clientLink.textContent = `Selecionar cliente - ${id}`
+
+  if (!name) {
+    clientLink.textContent = `Selecionar cliente - ${id}`
+  } else {
+    clientLink.textContent = `${name} - ${id}`
+  }
+
   clientElement.appendChild(clientLink)
   return clientElement
 }
@@ -19,17 +25,15 @@ function connectWebsocket(interval) {
 
   websocket.addEventListener('open', () => {
     console.log('✅ Conectado ao servidor!')
-    websocket.send(JSON.stringify({ type: 'select_sender' }))
+    websocket.send(JSON.stringify({ type: 'select_product' }))
   })
 
   websocket.onmessage = ({ data }) => {
     const message = JSON.parse(data)
-    const senders_id = message.senders
-    if (senders_id) {
-      clientsContainer.innerHTML = ''
-      for (const id of senders_id) {
-        clientsContainer.appendChild(createClient(id))
-      }
+    clientsContainer.innerHTML = ''
+    for (const index in message) {
+      let product = message[index]
+      clientsContainer.appendChild(createClient(product.id_list))
     }
   }
 
