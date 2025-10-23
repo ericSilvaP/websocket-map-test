@@ -6,7 +6,7 @@ let productMarker = L.marker([51.5, -0.09]).addTo(map)
 let userCoords = { lat: '', lng: '' }
 let productCoords = { lat: '', lng: '' }
 const params = new URLSearchParams(window.location.search)
-const senderId = params.get('id')
+const productId = params.get('id')
 const coordContainer = document.querySelector('.ex')
 
 function calcDistance(pos1, pos2) {
@@ -58,7 +58,7 @@ websocket.addEventListener('open', () => {
   websocket.send(
     JSON.stringify({
       type: 'tracker',
-      sender_id: senderId,
+      product_id: productId,
     })
   )
 })
