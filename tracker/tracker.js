@@ -12,18 +12,16 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map)
 
-// document.addEventListener('DOMContentLoaded', () => {
-//   if ('geolocation' in navigator) {
-//     navigator.geolocation.getCurrentPosition((pos) => {
-//       const lat = pos.coords.latitude
-//       const lng = pos.coords.longitude
-//       // ajusta o mapa e marcador para posição atual
-//       map.setView([lat, lng], 13)
-//       user_marker.setLatLng([lat, lng])
-//       coordContainer.textContent = `${lat}, ${lng}`
-//     })
-//   }
-// })
+if ('geolocation' in navigator) {
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const lat = pos.coords.latitude
+    const lng = pos.coords.longitude
+    // ajusta o mapa e marcador para posição atual
+    map.setView([lat, lng], 13)
+    user_marker.setLatLng([lat, lng])
+    coordContainer.textContent = `${lat}, ${lng}`
+  })
+}
 
 websocket.addEventListener('open', () => {
   // Identifica como visualizador

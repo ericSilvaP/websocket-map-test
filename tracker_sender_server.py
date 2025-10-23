@@ -46,7 +46,7 @@ async def handler(websocket):
     try:
         async for message in websocket:
             data = json.loads(message)
-            sender_id = None
+            product_id = None
             print(data)
 
             if data.get("type") == "sender":
@@ -75,11 +75,15 @@ async def handler(websocket):
 
                 # liga rastreador e rastreado
                 try:
-                    sender_id = int(data.get("sender_id"))
-                    if sender_id in list(range(len(PRODUCTS))):
-                        sender = PRODUCTS[sender_id]
-                        sender.trackers_connected.add(websocket)
-                        print(f"tracker connected to the sender {sender_id}\n")
+                    product_id = int(data.get("sender_id"))
+                    if product_id in list(range(len(PRODUCTS))):
+                        product = PRODUCTS[product_id]
+                        product.trackers_connected.add(websocket)
+                        print(f"tracker connected to the sender {product_id}\n")
+
+                        await websocket.send(
+                            json.dumps({"lat": product.lat, "lng": product.lng})
+                        )
                 except ValueError:
                     print("Error converting id")
                 continue
@@ -89,28 +93,28 @@ async def handler(websocket):
                 try:
                     for i, sender_instance in enumerate(PRODUCTS):
                         if sender_instance.websocket is websocket:
-                            sender_id = i
+                            product_id = i
                             break
                 except ValueError:
                     print("Sender not connected")
                     continue
 
-                if sender_id is not None:
+                if product_id is not None:
                     coords = {
                         "lat": data["lat"],
                         "lng": data["lng"],
                     }
                     print("Broadcasting coords:", coords, "\n")
                     broadcast(
-                        PRODUCTS[sender_id].trackers_connected, json.dumps(coords)
+                        PRODUCTS[product_id].trackers_connected, json.dumps(coords)
                     )
 
     finally:
         # Remove conexão ao desconectar
         PRODUCTS_WB.discard(websocket)
-        for sender in PRODUCTS:
-            if sender.websocket is websocket:
-                PRODUCTS.remove(sender)
+        for product in PRODUCTS:
+            if product.websocket is websocket:
+                PRODUCTS.remove(product)
                 updateSelectList()
         TRACKERS.discard(websocket)
         SELECT_PRODUCT.discard(websocket)
