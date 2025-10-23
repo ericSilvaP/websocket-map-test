@@ -1,5 +1,6 @@
 const websocket = new WebSocket('ws://localhost:5679/')
 let map = L.map('map').setView([51.505, -0.09], 13)
+let polyline = null
 let userMarker = L.marker([51.5, -0.09]).addTo(map)
 let productMarker = L.marker([51.5, -0.09]).addTo(map)
 let userCoords = { lat: '', lng: '' }
@@ -8,16 +9,16 @@ const params = new URLSearchParams(window.location.search)
 const senderId = params.get('id')
 const coordContainer = document.querySelector('.ex')
 
-function calcDistance(userPos, productPos) {
+function calcDistance(pos1, pos2) {
   const R = 6372.795477598 // raio médio quadrático da Terra em km
 
   // Converter graus para radianos
   const toRad = (deg) => (deg * Math.PI) / 180
 
-  const lat1 = toRad(userPos.lat)
-  const lon1 = toRad(userPos.lng)
-  const lat2 = toRad(productPos.lat)
-  const lon2 = toRad(productPos.lng)
+  const lat1 = toRad(pos1.lat)
+  const lon1 = toRad(pos1.lng)
+  const lat2 = toRad(pos2.lat)
+  const lon2 = toRad(pos2.lng)
 
   // Fórmula da distância (lei dos cossenos esférica)
   const distance =
@@ -30,12 +31,14 @@ function calcDistance(userPos, productPos) {
   return distance
 }
 
+// cria painel do mapa
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution:
     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map)
 
+// pega localização do usuario
 if ('geolocation' in navigator) {
   navigator.geolocation.getCurrentPosition((pos) => {
     const lat = pos.coords.latitude
@@ -66,18 +69,40 @@ websocket.onmessage = ({ data }) => {
   productCoords.lat = pos.lat
   productCoords.lng = pos.lng
 
-  updateDistance()
+  // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
+  if (!userCoords.lat && !userCoords.lng) {
+    setTimeout(() => {
+      updateDistance()
+      updateLine()
+    }, 2000)
+  }
+
   productMarker.setLatLng([productCoords.lat, productCoords.lng])
   map.setView([lat, lng], 13)
   coordContainer.textContent = `${pos.lat}, ${pos.lng}`
 }
 
 function updateDistance() {
-  if (!userCoords.lat && !userCoords.lng) {
-    setTimeout(updateDistance, 2000)
-  }
   const distance = calcDistance(userCoords, productCoords)
   document.querySelector('.distance').textContent = `Distância: ${Number(
     distance.toFixed(2)
   ).toLocaleString('pt-BR')} km`
+}
+
+function updateLine() {
+  polyline = createLine(
+    [userCoords.lat, userCoords.lng],
+    [productCoords.lat, productCoords.lng]
+  )
+  polyline.addTo(map)
+  map.fitBounds(polyline.getBounds())
+}
+
+function createLine(pos1, pos2) {
+  return L.polyline([pos1, pos2], {
+    color: 'blue',
+    weight: 3,
+    opacity: 0.7,
+    dashArray: '10, 10',
+  })
 }
