@@ -10,7 +10,10 @@ const productId = params.get('id')
 const coordContainer = document.querySelector('.ex')
 const simulateButton = document.querySelector('.simulate-container button')
 
-simulateButton.addEventListener('click', () => simulateMovement(10))
+simulateButton.addEventListener('click', () => {
+  simulateMovement(10)
+  simulateButton.disabled = true
+})
 
 function simulateMovement(steps) {
   let deltaLat = (userCoords.lat - productCoords.lat) / steps
@@ -95,15 +98,10 @@ websocket.onmessage = ({ data }) => {
   productCoords.lng = pos.lng
 
   // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
-  if (!userCoords.lat && !userCoords.lng) {
-    setTimeout(() => {
-      updateDistance()
-      updateLine()
-    }, 2000)
-  }
+  updateMap()
 
   productMarker.setLatLng([productCoords.lat, productCoords.lng])
-  map.setView([lat, lng], 13)
+  map.setView([productCoords.lat, productCoords.lng], 13)
   coordContainer.textContent = `${pos.lat}, ${pos.lng}`
 }
 
@@ -123,6 +121,15 @@ function updateLine() {
   )
   polyline.addTo(map)
   map.fitBounds(polyline.getBounds())
+}
+
+function updateMap() {
+  if (userCoords.lat && userCoords.lng) {
+    updateDistance()
+    updateLine()
+  } else {
+    setTimeout(updateMap, 2000)
+  }
 }
 
 function createLine(pos1, pos2) {
