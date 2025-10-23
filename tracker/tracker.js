@@ -8,6 +8,31 @@ let productCoords = { lat: '', lng: '' }
 const params = new URLSearchParams(window.location.search)
 const productId = params.get('id')
 const coordContainer = document.querySelector('.ex')
+const simulateButton = document.querySelector('.simulate-container button')
+
+simulateButton.addEventListener('click', () => simulateMovement(10))
+
+function simulateMovement(steps) {
+  let deltaLat = (userCoords.lat - productCoords.lat) / steps
+  let deltaLng = (userCoords.lng - productCoords.lng) / steps
+  let i = 0
+
+  const interval = setInterval(() => {
+    productCoords.lat += deltaLat
+    productCoords.lng += deltaLng
+    websocket.send(
+      JSON.stringify({
+        lat: productCoords.lat,
+        lng: productCoords.lng,
+        product_id: productId,
+      })
+    )
+    updateDistance()
+    updateLine()
+    i++
+    if (i >= steps) clearInterval(interval)
+  }, 1000)
+}
 
 function calcDistance(pos1, pos2) {
   const R = 6372.795477598 // raio médio quadrático da Terra em km
@@ -28,7 +53,7 @@ function calcDistance(pos1, pos2) {
         Math.cos(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2)
     )
 
-  return distance
+  return distance ? distance : 0
 }
 
 // cria painel do mapa
@@ -90,6 +115,8 @@ function updateDistance() {
 }
 
 function updateLine() {
+  if (polyline !== null) polyline.remove()
+
   polyline = createLine(
     [userCoords.lat, userCoords.lng],
     [productCoords.lat, productCoords.lng]

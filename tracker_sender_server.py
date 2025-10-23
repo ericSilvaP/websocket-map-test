@@ -49,7 +49,7 @@ async def handler(websocket):
             product_id = None
             print(data)
 
-            if data.get("type") == "sender":
+            if data.get("type") == "product":
                 # conecta quem envia localização
                 sender_instance = Sender(websocket)
                 PRODUCTS.append(sender_instance)
@@ -89,25 +89,29 @@ async def handler(websocket):
                 continue
 
             # pega a localização e compartilha com todos os rastreadores conectados
-            if "lat" in data and "lng" in data and websocket in PRODUCTS_WB:
-                try:
-                    for i, sender_instance in enumerate(PRODUCTS):
-                        if sender_instance.websocket is websocket:
-                            product_id = i
-                            break
-                except ValueError:
-                    print("Sender not connected")
-                    continue
+            if "lat" in data and "lng" in data:
+                if "product_id" in data:
+                    product_id = int(data.get("product_id"))
+                else:
+                    try:
+                        for i, sender_instance in enumerate(PRODUCTS):
+                            if sender_instance.websocket is websocket:
+                                product_id = i
+                                break
+                    except ValueError:
+                        print("Sender not connected")
+                        continue
 
                 if product_id is not None:
+                    product = PRODUCTS[product_id]
                     coords = {
                         "lat": data["lat"],
                         "lng": data["lng"],
                     }
                     print("Broadcasting coords:", coords, "\n")
-                    broadcast(
-                        PRODUCTS[product_id].trackers_connected, json.dumps(coords)
-                    )
+                    broadcast(product.trackers_connected, json.dumps(coords))
+                    product.lat = coords["lat"]
+                    product.lng = coords["lng"]
 
     finally:
         # Remove conexão ao desconectar

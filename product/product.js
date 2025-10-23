@@ -41,7 +41,7 @@ sendButton.addEventListener('click', () => {
 })
 
 function connectSender() {
-  websocket.send(JSON.stringify({ type: 'sender' }))
+  websocket.send(JSON.stringify({ type: 'product' }))
 }
 
 function sendCoordinates(websocket) {
