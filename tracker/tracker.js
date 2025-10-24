@@ -1,4 +1,4 @@
-const websocket = new WebSocket('ws://localhost:5679/')
+let websocket = null
 let map = L.map('map').setView([51.505, -0.09], 13)
 let polyline = null
 let userMarker = L.marker([51.5, -0.09]).addTo(map)
@@ -11,9 +11,49 @@ const productId = params.get('id')
 const coordContainer = document.querySelector('.ex')
 const simulateButton = document.querySelector('.simulate-container button')
 
+manageWebsocketConnection(2000)
+
+function manageWebsocketConnection(interval) {
+  websocket = new WebSocket('ws://localhost:5679/')
+  websocket.addEventListener('open', () => {
+    // Identifica como visualizador
+    websocket.send(
+      JSON.stringify({
+        type: 'tracker',
+        product_id: productId,
+      })
+    )
+  })
+
+  // Atualiza marcador ao receber coordenadas
+  websocket.onmessage = ({ data: message }) => {
+    const data = JSON.parse(message)
+    productCoords.lat = data.lat
+    productCoords.lng = data.lng
+    const productName = data.name
+
+    // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
+    updateMap()
+
+    productMarker.setLatLng([productCoords.lat, productCoords.lng])
+    if (productName) {
+      productMarker
+        .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
+        .openTooltip()
+    }
+    map.setView([productCoords.lat, productCoords.lng], 13)
+  }
+
+  websocket.addEventListener('close', () => {
+    setTimeout(manageWebsocketConnection, interval)
+  })
+}
+
 simulateButton.addEventListener('click', () => {
-  simulateMovement(10)
-  simulateButton.disabled = true
+  if (websocket.readyState === websocket.OPEN) {
+    simulateMovement(10)
+    simulateButton.disabled = true
+  }
 })
 
 function simulateMovement(steps) {
@@ -80,35 +120,6 @@ if ('geolocation' in navigator) {
     userMarker.setLatLng([lat, lng])
     userMarker.bindTooltip('Você', { permanent: true }).openTooltip()
   })
-}
-
-websocket.addEventListener('open', () => {
-  // Identifica como visualizador
-  websocket.send(
-    JSON.stringify({
-      type: 'tracker',
-      product_id: productId,
-    })
-  )
-})
-
-// Atualiza marcador ao receber coordenadas
-websocket.onmessage = ({ data: message }) => {
-  const data = JSON.parse(message)
-  productCoords.lat = data.lat
-  productCoords.lng = data.lng
-  const productName = data.name
-
-  // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
-  updateMap()
-
-  productMarker.setLatLng([productCoords.lat, productCoords.lng])
-  if (productName) {
-    productMarker
-      .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
-      .openTooltip()
-  }
-  map.setView([productCoords.lat, productCoords.lng], 13)
 }
 
 function updateDistance() {

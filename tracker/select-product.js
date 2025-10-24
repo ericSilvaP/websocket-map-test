@@ -20,7 +20,7 @@ function createClient(id, name = '') {
   return clientElement
 }
 
-function connectWebsocket(interval) {
+function manageWebsocketConnection(interval) {
   websocket = new WebSocket('ws://localhost:5679/')
 
   websocket.addEventListener('open', () => {
@@ -43,7 +43,7 @@ function connectWebsocket(interval) {
 
   websocket.addEventListener('close', () => {
     console.warn('⚠️ Conexão perdida. Tentando reconectar...')
-    setTimeout(connectWebsocket, interval)
+    setTimeout(manageWebsocketConnection, interval)
   })
 
   websocket.addEventListener('error', (err) => {
@@ -52,4 +52,4 @@ function connectWebsocket(interval) {
   })
 }
 
-connectWebsocket(RECONNECT_INTERVAL)
+manageWebsocketConnection(RECONNECT_INTERVAL)
