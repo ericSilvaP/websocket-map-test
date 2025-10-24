@@ -5,6 +5,7 @@ let userMarker = L.marker([51.5, -0.09]).addTo(map)
 let productMarker = L.marker([51.5, -0.09]).addTo(map)
 let userCoords = { lat: '', lng: '' }
 let productCoords = { lat: '', lng: '' }
+let distance = null
 const params = new URLSearchParams(window.location.search)
 const productId = params.get('id')
 const coordContainer = document.querySelector('.ex')
@@ -106,10 +107,21 @@ websocket.onmessage = ({ data }) => {
 }
 
 function updateDistance() {
-  const distance = calcDistance(userCoords, productCoords)
+  distance = calcDistance(userCoords, productCoords)
   document.querySelector('.distance').textContent = `Distância: ${Number(
     distance.toFixed(2)
   ).toLocaleString('pt-BR')} km`
+
+  if (distance == 0) {
+    const deliverMessage = document.querySelector('.deliver-message')
+    deliverMessage.textContent = 'Seu pedido foi entregue!'
+
+    simulateButton.disabled = true
+
+    websocket.send(
+      JSON.stringify({ status: 'delivered', product_id: productId })
+    )
+  }
 }
 
 function updateLine() {

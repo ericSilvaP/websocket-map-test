@@ -112,6 +112,14 @@ async def handler(websocket):
                     broadcast(product.trackers_connected, json.dumps(coords))
                     product.lat = coords["lat"]
                     product.lng = coords["lng"]
+                continue
+
+            if "status" in data and "product_id" in data:
+                status = data["status"]
+                product_id = int(data["product_id"])
+                PRODUCTS[product_id].status = status
+                print(PRODUCTS[product_id].status + "\n")
+                continue
 
     finally:
         # Remove conexão ao desconectar
@@ -122,8 +130,6 @@ async def handler(websocket):
                 updateSelectList()
         TRACKERS.discard(websocket)
         SELECT_PRODUCT.discard(websocket)
-
-        # atualiza a lista de conexões
 
 
 async def main():
