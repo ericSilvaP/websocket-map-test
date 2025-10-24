@@ -13,7 +13,7 @@ function createClient(id, name = '') {
   if (!name) {
     clientLink.textContent = `Selecionar cliente - ${id}`
   } else {
-    clientLink.textContent = `${name} - ${id}`
+    clientLink.textContent = `${name}`
   }
 
   clientElement.appendChild(clientLink)
