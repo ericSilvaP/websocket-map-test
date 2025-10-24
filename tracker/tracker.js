@@ -78,6 +78,7 @@ if ('geolocation' in navigator) {
 
     map.setView([lat, lng], 13)
     userMarker.setLatLng([lat, lng])
+    userMarker.bindTooltip('Você', { permanent: true }).openTooltip()
     coordContainer.textContent = `${lat}, ${lng}`
   })
 }
@@ -93,17 +94,23 @@ websocket.addEventListener('open', () => {
 })
 
 // Atualiza marcador ao receber coordenadas
-websocket.onmessage = ({ data }) => {
-  const pos = JSON.parse(data)
-  productCoords.lat = pos.lat
-  productCoords.lng = pos.lng
+websocket.onmessage = ({ data: message }) => {
+  const data = JSON.parse(message)
+  productCoords.lat = data.lat
+  productCoords.lng = data.lng
+  const productName = data.name
 
   // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
   updateMap()
 
   productMarker.setLatLng([productCoords.lat, productCoords.lng])
+  if (productName) {
+    productMarker
+      .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
+      .openTooltip()
+  }
   map.setView([productCoords.lat, productCoords.lng], 13)
-  coordContainer.textContent = `${pos.lat}, ${pos.lng}`
+  coordContainer.textContent = `${data.lat}, ${data.lng}`
 }
 
 function updateDistance() {
@@ -117,6 +124,8 @@ function updateDistance() {
     deliverMessage.textContent = 'Seu pedido foi entregue!'
 
     simulateButton.disabled = true
+
+    productMarker.unbindTooltip()
 
     websocket.send(
       JSON.stringify({ status: 'delivered', product_id: productId })

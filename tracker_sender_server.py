@@ -82,7 +82,13 @@ async def handler(websocket):
                         print(f"tracker connected to the sender {product_id}\n")
 
                         await websocket.send(
-                            json.dumps({"lat": product.lat, "lng": product.lng})
+                            json.dumps(
+                                {
+                                    "lat": product.lat,
+                                    "lng": product.lng,
+                                    "name": product.name,
+                                }
+                            )
                         )
                 except ValueError:
                     print("Error converting id")
