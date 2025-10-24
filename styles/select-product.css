@@ -19,6 +19,7 @@ h1 {
   display: grid;
   gap: 3px;
   grid-template-columns: repeat(autofit, minmax(100%, 1fr));
+  text-align: center;
 }
 
 .client {
