@@ -7,16 +7,24 @@ main {
   display: flex;
   justify-content: center;
   margin: 50px 0;
+  flex-direction: column;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .clients-container {
   display: grid;
   gap: 3px;
   grid-template-columns: repeat(autofit, minmax(100%, 1fr));
+  text-align: center;
 }
 
 .client {
   padding: 10px;
+  margin: 0 auto;
   max-width: fit-content;
   background-color: rgb(180, 176, 176);
 }

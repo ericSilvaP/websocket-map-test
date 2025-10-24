@@ -2,21 +2,36 @@ import asyncio
 import json
 from websockets.asyncio.server import serve, broadcast
 
+from product import Product
+
 TRACKERS = set()
-SELECT_SENDER = set()
-SENDERS = []
-SENDERS_WB = set()
+SELECT_PRODUCT = set()
+PRODUCTS = [
+    Product("Celular", "on_hold", -2.9092655546820363, -41.74681843324229),
+    Product("Televisão", "on_hold", -5.0710213079834725, -42.77375251180977),
+    Product("Conjunto de Camisas", "on_hold", -3.175940226775172, -41.86812830662907),
+]
+PRODUCTS_WB = set()
 
 
-def getSendersId():
-    return list(range(len(SENDERS)))
+def getProductsIndex():
+    return list(range(len(PRODUCTS)))
 
 
 def updateSelectList():
-    senders_ids_list = getSendersId()
-    if senders_ids_list:
-        broadcast(SELECT_SENDER, json.dumps({"senders": senders_ids_list}))
-        print("Lista de senders enviada:", senders_ids_list, "\n")
+    products_index_list = getProductsIndex()
+    products_name = [product.name for product in PRODUCTS if type(product) == Product]
+    if products_index_list:
+        broadcast(
+            SELECT_PRODUCT,
+            json.dumps(
+                {
+                    "id_list": products_index_list,
+                    "names_list": products_name,
+                }
+            ),
+        )
+        print("Products list sended:", products_index_list, "\n")
     else:
         print("No active senders.\n")
 
@@ -31,24 +46,24 @@ async def handler(websocket):
     try:
         async for message in websocket:
             data = json.loads(message)
-            sender_id = None
+            product_id = None
             print(data)
 
-            if data.get("type") == "sender":
+            if data.get("type") == "product":
                 # conecta quem envia localização
                 sender_instance = Sender(websocket)
-                SENDERS.append(sender_instance)
-                SENDERS_WB.add(websocket)
-                print(f"Sender number {len(SENDERS)} connected!\n")
+                PRODUCTS.append(sender_instance)
+                PRODUCTS_WB.add(websocket)
+                print(f"Sender number {len(PRODUCTS)} connected!\n")
 
                 # atualiza a lista de conexões
                 updateSelectList()
                 continue
 
-            if data.get("type") == "select_sender":
-                # conecta quem seleciona o sender
-                SELECT_SENDER.add(websocket)
-                print(f"Selecter number {len(SENDERS)} connected!\n")
+            if data.get("type") == "select_product":
+                # conecta quem seleciona o produto
+                SELECT_PRODUCT.add(websocket)
+                print(f"Selecter number {len(PRODUCTS)} connected!\n")
                 # atualiza a lista de conexões
                 updateSelectList()
                 continue
@@ -60,45 +75,67 @@ async def handler(websocket):
 
                 # liga rastreador e rastreado
                 try:
-                    sender_id = int(data.get("sender_id"))
-                    if sender_id in list(range(len(SENDERS))):
-                        sender = SENDERS[sender_id]
-                        sender.trackers_connected.add(websocket)
-                        print(f"tracker connected to the sender {sender_id}\n")
+                    product_id = int(data.get("product_id"))
+                    if product_id in list(range(len(PRODUCTS))):
+                        product = PRODUCTS[product_id]
+                        product.trackers_connected.add(websocket)
+                        print(f"tracker connected to the sender {product_id}\n")
+
+                        await websocket.send(
+                            json.dumps(
+                                {
+                                    "lat": product.lat,
+                                    "lng": product.lng,
+                                    "name": product.name,
+                                }
+                            )
+                        )
                 except ValueError:
                     print("Error converting id")
                 continue
 
             # pega a localização e compartilha com todos os rastreadores conectados
-            if "lat" in data and "lng" in data and websocket in SENDERS_WB:
-                try:
-                    for i, sender_instance in enumerate(SENDERS):
-                        if sender_instance.websocket is websocket:
-                            sender_id = i
-                            break
-                except ValueError:
-                    print("Sender not connected")
-                    continue
+            if "lat" in data and "lng" in data:
+                if "product_id" in data:
+                    product_id = int(data.get("product_id"))
+                else:
+                    try:
+                        for i, sender_instance in enumerate(PRODUCTS):
+                            if sender_instance.websocket is websocket:
+                                product_id = i
+                                break
+                    except ValueError:
+                        print("Sender not connected")
+                        continue
 
-                if sender_id is not None:
+                if product_id is not None:
+                    product = PRODUCTS[product_id]
                     coords = {
                         "lat": data["lat"],
                         "lng": data["lng"],
                     }
                     print("Broadcasting coords:", coords, "\n")
-                    broadcast(SENDERS[sender_id].trackers_connected, json.dumps(coords))
+                    broadcast(product.trackers_connected, json.dumps(coords))
+                    product.lat = coords["lat"]
+                    product.lng = coords["lng"]
+                continue
+
+            if "status" in data and "product_id" in data:
+                status = data["status"]
+                product_id = int(data["product_id"])
+                PRODUCTS[product_id].status = status
+                print(PRODUCTS[product_id].status + "\n")
+                continue
 
     finally:
         # Remove conexão ao desconectar
-        SENDERS_WB.discard(websocket)
-        for sender in SENDERS:
-            if sender.websocket is websocket:
-                SENDERS.remove(sender)
+        PRODUCTS_WB.discard(websocket)
+        for product in PRODUCTS:
+            if product.websocket is websocket:
+                PRODUCTS.remove(product)
                 updateSelectList()
         TRACKERS.discard(websocket)
-        SELECT_SENDER.discard(websocket)
-
-        # atualiza a lista de conexões
+        SELECT_PRODUCT.discard(websocket)
 
 
 async def main():
