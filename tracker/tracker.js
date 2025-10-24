@@ -79,7 +79,6 @@ if ('geolocation' in navigator) {
     map.setView([lat, lng], 13)
     userMarker.setLatLng([lat, lng])
     userMarker.bindTooltip('Você', { permanent: true }).openTooltip()
-    coordContainer.textContent = `${lat}, ${lng}`
   })
 }
 
@@ -110,7 +109,6 @@ websocket.onmessage = ({ data: message }) => {
       .openTooltip()
   }
   map.setView([productCoords.lat, productCoords.lng], 13)
-  coordContainer.textContent = `${data.lat}, ${data.lng}`
 }
 
 function updateDistance() {
