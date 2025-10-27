@@ -1,6 +1,17 @@
 let websocket = null
+const nullProducts = document.getElementById('nullProduct')
 const clientsContainer = document.querySelector('.clients-container')
 const RECONNECT_INTERVAL = 2000
+
+
+function initMap() {
+  map = L.map('map').setView([-2.90472, -41.7767], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+}
+
 
 function createClient(id, name = '') {
   const clientElement = document.createElement('div')
@@ -20,12 +31,14 @@ function createClient(id, name = '') {
   return clientElement
 }
 
+
 function manageWebsocketConnection(interval) {
   websocket = new WebSocket('ws://localhost:5679/')
 
   websocket.addEventListener('open', () => {
-    console.log('✅ Conectado ao servidor!')
+    console.log('Conectado ao servidor!')
     websocket.send(JSON.stringify({ type: 'select_product' }))
+    nullProducts.remove();  
   })
 
   websocket.onmessage = ({ data }) => {
@@ -42,14 +55,15 @@ function manageWebsocketConnection(interval) {
   }
 
   websocket.addEventListener('close', () => {
-    console.warn('⚠️ Conexão perdida. Tentando reconectar...')
+    console.warn('Conexão perdida. Tentando reconectar...')
     setTimeout(manageWebsocketConnection, interval)
   })
 
   websocket.addEventListener('error', (err) => {
-    console.error('❌ Erro no WebSocket:', err)
+    console.error('Erro no WebSocket:', err)
     websocket.close() // força fechamento e reconexão controlada
   })
 }
 
+initMap();
 manageWebsocketConnection(RECONNECT_INTERVAL)
