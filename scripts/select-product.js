@@ -85,6 +85,55 @@ function createClient(id, name = '') {
   return clientElement
 }
 
+function updateDistance() {
+  distance = calcDistance(userCoords, productCoords)
+  document.querySelector('.distance').textContent = `Distância: ${Number(
+    distance.toFixed(2)
+  ).toLocaleString('pt-BR')} km`
+
+  if (distance == 0) {
+    const deliverMessage = document.querySelector('.deliver-message')
+    deliverMessage.textContent = 'Seu pedido foi entregue!'
+
+    simulateButton.disabled = true
+
+    productMarker.unbindTooltip()
+
+    websocket.send(
+      JSON.stringify({ status: 'delivered', product_id: productId })
+    )
+  }
+}
+
+function updateLine() {
+  if (polyline !== null) polyline.remove()
+
+  polyline = createLine(
+    [userCoords.lat, userCoords.lng],
+    [productCoords.lat, productCoords.lng]
+  )
+  polyline.addTo(map)
+  map.fitBounds(polyline.getBounds())
+}
+
+function updateMap() {
+  if (userCoords.lat && userCoords.lng) {
+    updateDistance()
+    updateLine()
+  } else {
+    setTimeout(updateMap, 2000)
+  }
+}
+
+function createLine(pos1, pos2) {
+  return L.polyline([pos1, pos2], {
+    color: 'blue',
+    weight: 3,
+    opacity: 0.7,
+    dashArray: '10, 10',
+  })
+}
+
 function manageWebsocketConnection(interval) {
   websocket = new WebSocket('ws://localhost:5679/')
 
@@ -92,6 +141,15 @@ function manageWebsocketConnection(interval) {
     console.log('Conectado ao servidor!')
     websocket.send(JSON.stringify({ type: 'select_product' }))
     nullProducts.remove()
+    // if (productId) {
+    //   alert(1)
+    //   websocket.send(
+    //     JSON.stringify({
+    //       type: 'tracker',
+    //       product_id: productId,
+    //     })
+    //   )
+    // }
   })
 
   websocket.onmessage = ({ data }) => {
@@ -133,101 +191,52 @@ if ('geolocation' in navigator) {
   })
 }
 
+simulateButton.addEventListener('click', () => {
+  if (websocket.readyState === websocket.OPEN) {
+    simulateMovement(10)
+    simulateButton.disabled = true
+  }
+})
+
 manageWebsocketConnection(RECONNECT_INTERVAL)
 
-if (productId) {
-  manageWebsocketConnection(2000)
-  function manageWebsocketConnection(interval) {
-    websocket = new WebSocket('ws://localhost:5679/')
-    websocket.addEventListener('open', () => {
-      // Identifica como visualizador
-      websocket.send(
-        JSON.stringify({
-          type: 'tracker',
-          product_id: productId,
-        })
-      )
-    })
+// if (productId) {
+//   manageWebsocketConnection(2000)
+//   function manageWebsocketConnection(interval) {
+//     websocket = new WebSocket('ws://localhost:5679/')
+//     websocket.addEventListener('open', () => {
+//       // Identifica como visualizador
+//       websocket.send(
+//         JSON.stringify({
+//           type: 'tracker',
+//           product_id: productId,
+//         })
+//       )
+//     })
 
-    // Atualiza marcador ao receber coordenadas
-    websocket.onmessage = ({ data: message }) => {
-      const data = JSON.parse(message)
-      productCoords.lat = data.lat
-      productCoords.lng = data.lng
-      const productName = data.name
+//     // Atualiza marcador ao receber coordenadas
+//     websocket.onmessage = ({ data: message }) => {
+//       const data = JSON.parse(message)
+//       productCoords.lat = data.lat
+//       productCoords.lng = data.lng
+//       const productName = data.name
 
-      // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
-      updateMap()
+//       // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
+//       updateMap()
 
-      productMarker = L.marker([productCoords.lat, productCoords.lng]).addTo(
-        map
-      )
-      if (productName) {
-        productMarker
-          .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
-          .openTooltip()
-      }
-      map.setView([productCoords.lat, productCoords.lng], 13)
-    }
+//       productMarker = L.marker([productCoords.lat, productCoords.lng]).addTo(
+//         map
+//       )
+//       if (productName) {
+//         productMarker
+//           .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
+//           .openTooltip()
+//       }
+//       map.setView([productCoords.lat, productCoords.lng], 13)
+//     }
 
-    websocket.addEventListener('close', () => {
-      setTimeout(manageWebsocketConnection, interval)
-    })
-  }
-
-  simulateButton.addEventListener('click', () => {
-    if (websocket.readyState === websocket.OPEN) {
-      simulateMovement(10)
-      simulateButton.disabled = true
-    }
-  })
-
-  function updateDistance() {
-    distance = calcDistance(userCoords, productCoords)
-    document.querySelector('.distance').textContent = `Distância: ${Number(
-      distance.toFixed(2)
-    ).toLocaleString('pt-BR')} km`
-
-    if (distance == 0) {
-      const deliverMessage = document.querySelector('.deliver-message')
-      deliverMessage.textContent = 'Seu pedido foi entregue!'
-
-      simulateButton.disabled = true
-
-      productMarker.unbindTooltip()
-
-      websocket.send(
-        JSON.stringify({ status: 'delivered', product_id: productId })
-      )
-    }
-  }
-
-  function updateLine() {
-    if (polyline !== null) polyline.remove()
-
-    polyline = createLine(
-      [userCoords.lat, userCoords.lng],
-      [productCoords.lat, productCoords.lng]
-    )
-    polyline.addTo(map)
-    map.fitBounds(polyline.getBounds())
-  }
-
-  function updateMap() {
-    if (userCoords.lat && userCoords.lng) {
-      updateDistance()
-      updateLine()
-    } else {
-      setTimeout(updateMap, 2000)
-    }
-  }
-
-  function createLine(pos1, pos2) {
-    return L.polyline([pos1, pos2], {
-      color: 'blue',
-      weight: 3,
-      opacity: 0.7,
-      dashArray: '10, 10',
-    })
-  }
-}
+//     websocket.addEventListener('close', () => {
+//       setTimeout(manageWebsocketConnection, interval)
+//     })
+//   }
+// }

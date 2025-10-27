@@ -74,7 +74,7 @@ async def handler(websocket):
                 print("Tracker connected!\n")
 
                 # liga rastreador e rastreado
-                try:    
+                try:
                     product_id = int(data.get("product_id"))
                     if product_id in list(range(len(PRODUCTS))):
                         product = PRODUCTS[product_id]
