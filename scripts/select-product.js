@@ -3,7 +3,6 @@ const clientsContainer = document.querySelector('.clients-container')
 const RECONNECT_INTERVAL = 2000
 const params = new URLSearchParams(window.location.search)
 const productId = params.get('id')
-const coordContainer = document.querySelector('.ex')
 const simulateButton = document.querySelector('.simulate-container button')
 let websocket = null
 let map = initMap()
@@ -13,6 +12,7 @@ let polyline = null
 let userCoords = { lat: '', lng: '' }
 let productCoords = { lat: '', lng: '' }
 let distance = null
+let isSimulating = false
 
 function initMap() {
   let map = L.map('map').setView([-2.90472, -41.7767], 13)
@@ -155,6 +155,8 @@ function manageWebsocketConnection(interval) {
     if (message.lat && message.lng) {
       productCoords.lat = message.lat
       productCoords.lng = message.lng
+      isSimulating = message.isSimulating
+
       const productName = message.name
       // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
       updateMap()
@@ -169,6 +171,10 @@ function manageWebsocketConnection(interval) {
           .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
           .openTooltip()
       }
+
+      isSimulating
+        ? (simulateButton.disabled = true)
+        : (simulateButton.disabled = false)
     } else {
       clientsContainer.innerHTML = ''
 
@@ -184,6 +190,7 @@ function manageWebsocketConnection(interval) {
 
   websocket.addEventListener('close', () => {
     console.warn('Conexão perdida. Tentando reconectar...')
+    isSimulating = false
     setTimeout(manageWebsocketConnection, interval)
   })
 
@@ -212,6 +219,8 @@ simulateButton.addEventListener('click', () => {
   if (websocket.readyState === websocket.OPEN) {
     simulateMovement(10)
     simulateButton.disabled = true
+    isSimulating = true
+    websocket.send(JSON.stringify({ isSimulating: 1 }))
   }
 })
 

@@ -12,6 +12,7 @@ PRODUCTS = [
     Product("Conjunto de Camisas", "on_hold", -3.175940226775172, -41.86812830662907),
 ]
 PRODUCTS_WB = set()
+IS_SIMULATING = 0
 
 
 def getProductsIndex():
@@ -63,6 +64,7 @@ class Sender:
 
 
 async def handler(websocket):
+    global IS_SIMULATING
     try:
         async for message in websocket:
             data = json.loads(message)
@@ -133,6 +135,7 @@ async def handler(websocket):
                     coords = {
                         "lat": data["lat"],
                         "lng": data["lng"],
+                        "isSimulating": IS_SIMULATING,
                     }
                     print("Broadcasting coords:", coords, "\n")
                     broadcast(product.trackers_connected, json.dumps(coords))
@@ -145,6 +148,11 @@ async def handler(websocket):
                 product_id = int(data["product_id"])
                 PRODUCTS[product_id].status = status
                 print(PRODUCTS[product_id].status + "\n")
+                continue
+
+            if "isSimulating" in data:
+                print("Is simulating", data.get("isSimulating"))
+                IS_SIMULATING = data.get("isSimulating")
                 continue
 
     finally:
