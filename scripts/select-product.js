@@ -140,28 +140,43 @@ function manageWebsocketConnection(interval) {
   websocket.addEventListener('open', () => {
     console.log('Conectado ao servidor!')
     websocket.send(JSON.stringify({ type: 'select_product' }))
+    websocket.send(
+      JSON.stringify({
+        type: 'tracker',
+        product_id: productId,
+      })
+    )
     nullProducts.remove()
-    // if (productId) {
-    //   alert(1)
-    //   websocket.send(
-    //     JSON.stringify({
-    //       type: 'tracker',
-    //       product_id: productId,
-    //     })
-    //   )
-    // }
   })
 
   websocket.onmessage = ({ data }) => {
     const message = JSON.parse(data)
-    clientsContainer.innerHTML = ''
+    if (message.lat && message.lng) {
+      productCoords.lat = message.lat
+      productCoords.lng = message.lng
+      const productName = message.name
+      // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
+      updateMap()
 
-    const id_list = message.id_list
-    const names_list = message.names_list
-    for (const index in id_list) {
-      const id = id_list[index]
-      const name = names_list[index]
-      clientsContainer.appendChild(createClient(id, name))
+      productMarker = L.marker([productCoords.lat, productCoords.lng]).addTo(
+        map
+      )
+      if (productName) {
+        productMarker
+          .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
+          .openTooltip()
+      }
+      map.setView([productCoords.lat, productCoords.lng], 13)
+    } else {
+      clientsContainer.innerHTML = ''
+
+      const id_list = message.id_list
+      const names_list = message.names_list
+      for (const index in id_list) {
+        const id = id_list[index]
+        const name = names_list[index]
+        clientsContainer.appendChild(createClient(id, name))
+      }
     }
   }
 
@@ -199,44 +214,3 @@ simulateButton.addEventListener('click', () => {
 })
 
 manageWebsocketConnection(RECONNECT_INTERVAL)
-
-// if (productId) {
-//   manageWebsocketConnection(2000)
-//   function manageWebsocketConnection(interval) {
-//     websocket = new WebSocket('ws://localhost:5679/')
-//     websocket.addEventListener('open', () => {
-//       // Identifica como visualizador
-//       websocket.send(
-//         JSON.stringify({
-//           type: 'tracker',
-//           product_id: productId,
-//         })
-//       )
-//     })
-
-//     // Atualiza marcador ao receber coordenadas
-//     websocket.onmessage = ({ data: message }) => {
-//       const data = JSON.parse(message)
-//       productCoords.lat = data.lat
-//       productCoords.lng = data.lng
-//       const productName = data.name
-
-//       // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
-//       updateMap()
-
-//       productMarker = L.marker([productCoords.lat, productCoords.lng]).addTo(
-//         map
-//       )
-//       if (productName) {
-//         productMarker
-//           .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
-//           .openTooltip()
-//       }
-//       map.setView([productCoords.lat, productCoords.lng], 13)
-//     }
-
-//     websocket.addEventListener('close', () => {
-//       setTimeout(manageWebsocketConnection, interval)
-//     })
-//   }
-// }

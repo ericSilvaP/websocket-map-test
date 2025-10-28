@@ -36,6 +36,26 @@ def updateSelectList():
         print("No active senders.\n")
 
 
+async def send_product_coords(websocket, product_id):
+    try:
+        if product_id in list(range(len(PRODUCTS))):
+            product = PRODUCTS[product_id]
+            product.trackers_connected.add(websocket)
+            print(f"tracker connected to the sender {product_id}\n")
+
+            await websocket.send(
+                json.dumps(
+                    {
+                        "lat": product.lat,
+                        "lng": product.lng,
+                        "name": product.name,
+                    }
+                )
+            )
+    except ValueError:
+        print("Error converting id")
+
+
 class Sender:
     def __init__(self, websocket):
         self.websocket = websocket
@@ -63,7 +83,7 @@ async def handler(websocket):
             if data.get("type") == "select_product":
                 # conecta quem seleciona o produto
                 SELECT_PRODUCT.add(websocket)
-                print(f"Selecter number {len(PRODUCTS)} connected!\n")
+                print(f"Selecter number {len(SELECT_PRODUCT)} connected!\n")
                 # atualiza a lista de conexões
                 updateSelectList()
                 continue
