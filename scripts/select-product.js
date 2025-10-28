@@ -42,6 +42,7 @@ function simulateMovement(steps) {
     updateLine()
     i++
     if (i >= steps) clearInterval(interval)
+    console.log(steps, i)
   }, 1000)
 }
 
@@ -113,7 +114,6 @@ function updateLine() {
     [productCoords.lat, productCoords.lng]
   )
   polyline.addTo(map)
-  map.fitBounds(polyline.getBounds())
 }
 
 function updateMap() {
