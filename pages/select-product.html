@@ -14,9 +14,9 @@
     <header>
       <h1>Sistema de Rastreamento em Tempo Real</h1>
       <p>
-        Este projeto utiliza <strong>WebSocket</strong> para monitorar, em tempo real,
-        as rotas de produtos cadastrados no servidor. Ao selecionar um produto,
-        o mapa abaixo exibe sua rota atual.
+        Este projeto utiliza <strong>WebSocket</strong> para monitorar, em tempo
+        real, as rotas de produtos cadastrados no servidor. Ao selecionar um
+        produto, o mapa abaixo exibe sua rota atual.
       </p>
     </header>
 
@@ -31,6 +31,11 @@
         <h2>Mapa da Rota</h2>
         <div id="map" class="map"></div>
         <p class="hint">Selecione um produto acima para visualizar a rota.</p>
+        <div class="simulate-container">
+          <button>Simular</button>
+        </div>
+        <div class="distance"></div>
+        <div class="deliver-message"></div>
       </section>
 
       <section class="team-section">
@@ -53,4 +58,3 @@
     <script src="../scripts/select-product.js"></script>
   </body>
 </html>
-

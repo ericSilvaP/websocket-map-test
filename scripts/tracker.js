@@ -1,7 +1,7 @@
 let websocket = null
 let map = L.map('map').setView([51.505, -0.09], 13)
 let polyline = null
-let userMarker = L.marker([51.5, -0.09]).addTo(map)
+let userMarker = null
 let productMarker = L.marker([51.5, -0.09]).addTo(map)
 let userCoords = { lat: '', lng: '' }
 let productCoords = { lat: '', lng: '' }
@@ -117,7 +117,7 @@ if ('geolocation' in navigator) {
     userCoords.lng = lng
 
     map.setView([lat, lng], 13)
-    userMarker.setLatLng([lat, lng])
+    userMarker = L.marker([lat, lng]).addTo(map)
     userMarker.bindTooltip('Você', { permanent: true }).openTooltip()
   })
 }

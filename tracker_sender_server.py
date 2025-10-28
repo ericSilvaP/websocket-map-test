@@ -12,6 +12,7 @@ PRODUCTS = [
     Product("Conjunto de Camisas", "on_hold", -3.175940226775172, -41.86812830662907),
 ]
 PRODUCTS_WB = set()
+IS_SIMULATING = 0
 
 
 def getProductsIndex():
@@ -36,6 +37,26 @@ def updateSelectList():
         print("No active senders.\n")
 
 
+async def send_product_coords(websocket, product_id):
+    try:
+        if product_id in list(range(len(PRODUCTS))):
+            product = PRODUCTS[product_id]
+            product.trackers_connected.add(websocket)
+            print(f"tracker connected to the sender {product_id}\n")
+
+            await websocket.send(
+                json.dumps(
+                    {
+                        "lat": product.lat,
+                        "lng": product.lng,
+                        "name": product.name,
+                    }
+                )
+            )
+    except ValueError:
+        print("Error converting id")
+
+
 class Sender:
     def __init__(self, websocket):
         self.websocket = websocket
@@ -43,6 +64,7 @@ class Sender:
 
 
 async def handler(websocket):
+    global IS_SIMULATING
     try:
         async for message in websocket:
             data = json.loads(message)
@@ -63,7 +85,7 @@ async def handler(websocket):
             if data.get("type") == "select_product":
                 # conecta quem seleciona o produto
                 SELECT_PRODUCT.add(websocket)
-                print(f"Selecter number {len(PRODUCTS)} connected!\n")
+                print(f"Selecter number {len(SELECT_PRODUCT)} connected!\n")
                 # atualiza a lista de conexões
                 updateSelectList()
                 continue
@@ -74,7 +96,7 @@ async def handler(websocket):
                 print("Tracker connected!\n")
 
                 # liga rastreador e rastreado
-                try:    
+                try:
                     product_id = int(data.get("product_id"))
                     if product_id in list(range(len(PRODUCTS))):
                         product = PRODUCTS[product_id]
@@ -113,6 +135,7 @@ async def handler(websocket):
                     coords = {
                         "lat": data["lat"],
                         "lng": data["lng"],
+                        "isSimulating": IS_SIMULATING,
                     }
                     print("Broadcasting coords:", coords, "\n")
                     broadcast(product.trackers_connected, json.dumps(coords))
@@ -125,6 +148,11 @@ async def handler(websocket):
                 product_id = int(data["product_id"])
                 PRODUCTS[product_id].status = status
                 print(PRODUCTS[product_id].status + "\n")
+                continue
+
+            if "isSimulating" in data:
+                print("Is simulating", data.get("isSimulating"))
+                IS_SIMULATING = data.get("isSimulating")
                 continue
 
     finally:
