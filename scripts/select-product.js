@@ -42,7 +42,6 @@ function simulateMovement(steps) {
     updateLine()
     i++
     if (i >= steps) clearInterval(interval)
-    console.log(steps, i)
   }, 1000)
 }
 
@@ -87,22 +86,21 @@ function createClient(id, name = '') {
 }
 
 function updateDistance() {
+  const deliverMessage = document.querySelector('.deliver-message')
   distance = calcDistance(userCoords, productCoords)
   document.querySelector('.distance').textContent = `Distância: ${Number(
     distance.toFixed(2)
   ).toLocaleString('pt-BR')} km`
 
   if (distance == 0) {
-    const deliverMessage = document.querySelector('.deliver-message')
     deliverMessage.textContent = 'Seu pedido foi entregue!'
-
     simulateButton.disabled = true
-
     productMarker.unbindTooltip()
-
     websocket.send(
       JSON.stringify({ status: 'delivered', product_id: productId })
     )
+  } else {
+    deliverMessage.textContent = 'Pedido em rota de entrega...'
   }
 }
 
@@ -140,12 +138,15 @@ function manageWebsocketConnection(interval) {
   websocket.addEventListener('open', () => {
     console.log('Conectado ao servidor!')
     websocket.send(JSON.stringify({ type: 'select_product' }))
-    websocket.send(
-      JSON.stringify({
-        type: 'tracker',
-        product_id: productId,
-      })
-    )
+    if (productId) {
+      websocket.send(
+        JSON.stringify({
+          type: 'tracker',
+          product_id: productId,
+        })
+      )
+      simulateButton.style.display = 'inline-block'
+    }
     nullProducts.remove()
   })
 
@@ -168,8 +169,6 @@ function manageWebsocketConnection(interval) {
           .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
           .openTooltip()
       }
-
-      map.setView([productCoords.lat, productCoords.lng], 13)
     } else {
       clientsContainer.innerHTML = ''
 
@@ -215,5 +214,7 @@ simulateButton.addEventListener('click', () => {
     simulateButton.disabled = true
   }
 })
+
+simulateButton.style.display = 'none'
 
 manageWebsocketConnection(RECONNECT_INTERVAL)
