@@ -158,14 +158,17 @@ function manageWebsocketConnection(interval) {
       // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
       updateMap()
 
-      productMarker = L.marker([productCoords.lat, productCoords.lng]).addTo(
-        map
-      )
+      // se marcador não existir, cria e seta coordenadas. Se existir, só atualiza as coordenadas
+      productMarker = productMarker
+        ? productMarker.setLatLng([productCoords.lat, productCoords.lng])
+        : L.marker([productCoords.lat, productCoords.lng]).addTo(map)
+
       if (productName) {
         productMarker
           .bindTooltip(`Seu produto: ${productName}`, { permanent: true })
           .openTooltip()
       }
+
       map.setView([productCoords.lat, productCoords.lng], 13)
     } else {
       clientsContainer.innerHTML = ''
