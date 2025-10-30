@@ -1,60 +1,60 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="../styles/select-product.css" />
-    <title>Selecione o Produto</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-  </head>
-  <body>
-    <header>
-      <h1>Sistema de Rastreamento em Tempo Real</h1>
-      <p>
-        Este projeto utiliza <strong>WebSocket</strong> para monitorar, em tempo
-        real, as rotas de produtos cadastrados no servidor. Ao selecionar um
-        produto, o mapa abaixo exibe sua rota atual.
-      </p>
-    </header>
 
-    <main>
-      <section class="clients-panel">
-        <h2>Selecione um Produto</h2>
-        <p id="nullProduct">Sem produtos disponíveis</p>
-        <div class="clients-container"></div>
-      </section>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="../styles/select-product.css" />
+  <title>Selecione o Produto</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
 
-      <section class="map-section">
-        <h2>Mapa da Rota</h2>
-        <div id="map" class="map"></div>
-        <p class="hint">Selecione um produto acima para visualizar a rota.</p>
-        <div class="simulate-container">
-          <button>Simular</button>
-        </div>
-        <div class="distance"></div>
-        <div class="deliver-message"></div>
-      </section>
+<body>
+  <header>
+    <h1>Sistema de Rastreamento em Tempo Real</h1>
+    <p>
+      Este projeto utiliza <strong>WebSocket</strong> para monitorar, em tempo
+      real, as rotas de produtos cadastrados no servidor. Ao selecionar um
+      produto, o mapa abaixo exibe sua rota atual.
+    </p>
+  </header>
 
-      <section class="team-section">
-        <h2>Equipe de Desenvolvimento</h2>
-        <div class="team-members">
-          <div class="member">ERIC SILVA PATRICIO — Desenvolvedor Backend</div>
-          <div class="member">FELIPE MARTINS — Frontend</div>
-          <div class="member">HENRIQUE VERAS — Frontend</div>
-          <div class="member">JORDAN CARVALHO — Design UI/UX</div>
-          <div class="member">JOSE MARANHÃO — Frontend</div>
-        </div>
-      </section>
-    </main>
+  <main>
+    <section class="clients-panel">
+      <h2>Selecione um Produto</h2>
+      <p id="nullProduct">Sem produtos disponíveis</p>
+      <div class="clients-container"></div>
+    </section>
 
-    <footer>
-      <p>© 2025 Sistema de Rastreamento • Todos os direitos reservados.</p>
-    </footer>
+    <section class="map-section">
+      <h2>Mapa da Rota</h2>
+      <div id="map" class="map"></div>
+      <p class="hint">Selecione um produto acima para visualizar a rota.</p>
+      <div class="simulate-container">
+        <button>Simular</button>
+      </div>
+      <div class="distance"></div>
+      <div class="deliver-message"></div>
+    </section>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="../scripts/select-product.js"></script>
-  </body>
+    <section class="team-section">
+      <h2>Equipe de Desenvolvimento</h2>
+      <div class="team-members">
+        <div class="member">ERIC SILVA PATRICIO — Desenvolvedor Backend</div>
+        <div class="member">FELIPE MARTINS — Frontend</div>
+        <div class="member">HENRIQUE VERAS — Frontend</div>
+        <div class="member">JORDAN CARVALHO — Design UI/UX</div>
+        <div class="member">JOSE MARANHÃO — Frontend</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 Sistema de Rastreamento • Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../scripts/select-product.js"></script>
+</body>
+
 </html>
