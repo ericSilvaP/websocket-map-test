@@ -185,6 +185,11 @@ footer {
     margin: 0 auto;
     margin-top: 18px;
   }
+
+  .map {
+    max-width: 400px;
+    margin: 0 auto;
+  }
 }
 
 @media (max-width: 480px) {
@@ -203,9 +208,14 @@ footer {
     margin: 0 auto;
   }
 
-  .team-members {
-    display: grid;
+  .map {
+    max-width: 300px;
+    margin: 0 auto;
   }
+
+  /*.team-members {
+    display: grid;
+  }*/
 
   /*.clients-container {
     display: grid;
