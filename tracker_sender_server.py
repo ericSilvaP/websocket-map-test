@@ -12,7 +12,7 @@ PRODUCTS = [
     Product("Conjunto de Camisas", "on_hold", -3.175940226775172, -41.86812830662907),
 ]
 PRODUCTS_WB = set()
-IS_SIMULATING = 0
+# REMOVIDO: IS_SIMULATING (usamos o do produto)
 
 
 def getProductsIndex():
@@ -21,7 +21,8 @@ def getProductsIndex():
 
 def updateSelectList():
     products_index_list = getProductsIndex()
-    products_name = [product.name for product in PRODUCTS if type(product) == Product]
+    # MUDANÇA: Simplificado, pois agora é tudo 'Product'
+    products_name = [product.name for product in PRODUCTS]
     if products_index_list:
         broadcast(
             SELECT_PRODUCT,
@@ -57,14 +58,8 @@ async def send_product_coords(websocket, product_id):
         print("Error converting id")
 
 
-class Sender:
-    def __init__(self, websocket):
-        self.websocket = websocket
-        self.trackers_connected = set()
-
-
 async def handler(websocket):
-    global IS_SIMULATING
+    # REMOVIDO: global IS_SIMULATING
     try:
         async for message in websocket:
             data = json.loads(message)
@@ -73,29 +68,32 @@ async def handler(websocket):
 
             if data.get("type") == "product":
                 # conecta quem envia localização
-                sender_instance = Sender(websocket)
-                PRODUCTS.append(sender_instance)
+                product_name = data.get("name")
+                # Agora o construtor do Product define original_lat/lng para 0
+                New_product = Product(product_name, "On_hold", 0, 0)
+                New_product.websocket = websocket
+
+                PRODUCTS.append(New_product)
                 PRODUCTS_WB.add(websocket)
-                print(f"Sender number {len(PRODUCTS)} connected!\n")
+
+                
+                print(f"Sender (Produto {len(PRODUCTS)-1}) {product_name} connected!\n")
 
                 # atualiza a lista de conexões
                 updateSelectList()
                 continue
 
             if data.get("type") == "select_product":
-                # conecta quem seleciona o produto
+                # (sem mudança)
                 SELECT_PRODUCT.add(websocket)
                 print(f"Selecter number {len(SELECT_PRODUCT)} connected!\n")
-                # atualiza a lista de conexões
                 updateSelectList()
                 continue
 
             if data.get("type") == "tracker":
-                # conecta quem recebe localização
+                # (sem mudança)
                 TRACKERS.add(websocket)
                 print("Tracker connected!\n")
-
-                # liga rastreador e rastreado
                 try:
                     product_id = int(data.get("product_id"))
                     if product_id in list(range(len(PRODUCTS))):
@@ -122,8 +120,8 @@ async def handler(websocket):
                     product_id = int(data.get("product_id"))
                 else:
                     try:
-                        for i, sender_instance in enumerate(PRODUCTS):
-                            if sender_instance.websocket is websocket:
+                        for i, product in enumerate(PRODUCTS):
+                            if product.websocket is websocket:
                                 product_id = i
                                 break
                     except ValueError:
@@ -132,18 +130,30 @@ async def handler(websocket):
 
                 if product_id is not None:
                     product = PRODUCTS[product_id]
+                    
+                    # NOVO: Se for a primeira coordenada de um
+                    # novo produto, salva como a original.
+                    if not product.has_set_original:
+                        product.original_lat = data["lat"]
+                        product.original_lng = data["lng"]
+                        product.has_set_original = True
+                        print(f"Localização original definida para {product.name}\n")
+                    
+                    # Atualiza a localização ATUAL
+                    product.lat = data["lat"]
+                    product.lng = data["lng"]
+                    
                     coords = {
-                        "lat": data["lat"],
-                        "lng": data["lng"],
-                        "isSimulating": IS_SIMULATING,
+                        "lat": product.lat,
+                        "lng": product.lng,
+                        "isSimulating": product.isSimulating,
                     }
                     print("Broadcasting coords:", coords, "\n")
                     broadcast(product.trackers_connected, json.dumps(coords))
-                    product.lat = coords["lat"]
-                    product.lng = coords["lng"]
                 continue
 
             if "status" in data and "product_id" in data:
+                # (sem mudança)
                 status = data["status"]
                 product_id = int(data["product_id"])
                 PRODUCTS[product_id].status = status
@@ -151,25 +161,74 @@ async def handler(websocket):
                 continue
 
             if "isSimulating" in data:
-                print("Is simulating", data.get("isSimulating"))
-                IS_SIMULATING = data.get("isSimulating")
+                print("Mensagem 'isSimulating' recebida:", data.get("isSimulating"))
+                
+                product_id = None
+                if "product_id" in data:
+                    product_id = int(data.get("product_id"))
+                else:
+                    try:
+                        for i, product in enumerate(PRODUCTS):
+                            if product.websocket is websocket:
+                                product_id = i
+                                break
+                    except ValueError:
+                        product_id = None
+
+                if product_id is not None and product_id in range(len(PRODUCTS)):
+                    product = PRODUCTS[product_id]
+                    new_sim_status = data.get("isSimulating")
+                    product.isSimulating = new_sim_status
+                    
+                    print(f"Produto {product_id} ('{product.name}') simulação: {product.isSimulating}\n")
+
+                    # NOVO: Se a simulação PAROU (== 0)
+                    if new_sim_status == 0:
+                        print(f"Resetando {product.name} para local original.")
+                        # Restaura a localização atual para a original
+                        product.lat = product.original_lat
+                        product.lng = product.original_lng
+                        
+                        # Avisa os trackers que a posição foi resetada
+                        coords = {
+                            "lat": product.lat,
+                            "lng": product.lng,
+                            "isSimulating": 0,
+                        }
+                        broadcast(product.trackers_connected, json.dumps(coords))
+                
+                else:
+                    print("Erro: Não foi possível identificar o produto para 'isSimulating'.\n")
+                
                 continue
 
     finally:
-        # Remove conexão ao desconectar
+        # (sem mudança)
         PRODUCTS_WB.discard(websocket)
+        product_to_remove = None
         for product in PRODUCTS:
             if product.websocket is websocket:
-                PRODUCTS.remove(product)
-                updateSelectList()
+                product_to_remove = product
+                break
+        if product_to_remove:
+            PRODUCTS.remove(product_to_remove)
+            updateSelectList()
+            
         TRACKERS.discard(websocket)
         SELECT_PRODUCT.discard(websocket)
 
 
 async def main():
     async with serve(handler, "localhost", 5679) as server:
+        sockname = list(server.sockets)[0].getsockname()
+        host = sockname[0]
+        port = sockname[1]
+        print(f"🚀 Servidor WebSocket conectado em ws://{host}:{port}")                       
         await asyncio.Future()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nServidor WebSocket desconectado!")
