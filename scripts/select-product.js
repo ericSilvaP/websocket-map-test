@@ -105,7 +105,7 @@ function updateDistance() {
     distance.toFixed(2)
   ).toLocaleString('pt-BR')} km`
 
-  if (distance == 0 && productStatus != 'delivered') {
+  if (distance == 0) {
     deliverMessage.textContent = 'Seu pedido foi entregue!'
     productMarker.unbindTooltip()
     websocket.send(
@@ -174,11 +174,10 @@ function manageWebsocketConnection(interval) {
       productCoords.lng = message.lng
       isSimulating = message.isSimulating
       productStatus = message.status
-      console.log(productStatus)
 
       const productName = message.name
       // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
-      updateMap()
+      if (productStatus !== 'delivered') updateMap()
 
       // se marcador não existir, cria e seta coordenadas. Se existir, só atualiza as coordenadas
       productMarker = productMarker
@@ -249,7 +248,11 @@ simulateButton.addEventListener('click', () => {
   }
 })
 
-resetProductCoordsButton.addEventListener('click', resetProductCoords)
+resetProductCoordsButton.addEventListener('click', () => {
+  resetProductCoords()
+  simulateButton.disabled = false
+  resetProductCoordsButton.disabled = false
+})
 
 simulateButton.style.display = 'none'
 resetProductCoordsButton.style.display = 'none'
