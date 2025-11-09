@@ -53,6 +53,7 @@ function resetProductCoords() {
     JSON.stringify({
       id: productId,
       type: 'reset',
+      status: 'on_hold',
     })
   )
 }
@@ -106,7 +107,6 @@ function updateDistance() {
 
   if (distance == 0 && productStatus != 'delivered') {
     deliverMessage.textContent = 'Seu pedido foi entregue!'
-    simulateButton.disabled = true
     productMarker.unbindTooltip()
     websocket.send(
       JSON.stringify({
@@ -197,6 +197,7 @@ function manageWebsocketConnection(interval) {
       } else {
         simulateButton.disabled = false
         resetProductCoordsButton.disabled = false
+        if (distance === 0) simulateButton.disabled = true
       }
     } else {
       clientsContainer.innerHTML = ''

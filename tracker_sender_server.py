@@ -140,46 +140,6 @@ async def handler(websocket):
                 print("Updated Status", PRODUCTS[product_id].status + "\n")
                 continue
 
-            if "isSimulating" in data:
-                print("Mensagem 'isSimulating' recebida:", data.get("isSimulating"))
-
-                product_id = None
-                if "product_id" in data:
-                    product_id = int(data.get("product_id"))
-                else:
-                    try:
-                        for i, product in enumerate(PRODUCTS):
-                            if product.websocket is websocket:
-                                product_id = i
-                                break
-                    except ValueError:
-                        product_id = None
-
-                if product_id is not None and product_id in range(len(PRODUCTS)):
-                    product = PRODUCTS[product_id]
-                    new_sim_status = data.get("isSimulating")
-                    product.isSimulating = new_sim_status
-
-                    print(
-                        f"Produto {product_id} ('{product.name}') simulação: {product.isSimulating}\n"
-                    )
-
-                    # NOVO: Se a simulação PAROU (== 0)
-                    if new_sim_status == 0:
-                        print(f"Resetando {product.name} para local original.")
-                        # Restaura a localização atual para a original
-                        product.lat = product.original_lat
-                        product.lng = product.original_lng
-
-                        # Avisa os trackers que a posição foi resetada
-                        coords = {
-                            "lat": product.lat,
-                            "lng": product.lng,
-                            "isSimulating": 0,
-                        }
-                        broadcast(product.trackers_connected, json.dumps(coords))
-                continue
-
             if data.get("type") == "reset":
                 try:
                     product_id = int(data.get("id"))
@@ -190,6 +150,7 @@ async def handler(websocket):
                         continue
 
                     product.reset_coords()
+                    product.status = data["status"]
                     broadcast_product_coords(product)
                     print("Coords reseted", product.lat, product.lng)
                 except ValueError:
