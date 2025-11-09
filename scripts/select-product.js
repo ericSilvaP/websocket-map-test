@@ -34,6 +34,7 @@ function simulateMovement(steps) {
     productCoords.lng += deltaLng
     websocket.send(
       JSON.stringify({
+        type: 'updateCoords',
         lat: productCoords.lat,
         lng: productCoords.lng,
         product_id: productId,
@@ -47,7 +48,6 @@ function simulateMovement(steps) {
 }
 
 function resetProductCoords() {
-  console.log('Reset')
   websocket.send(
     JSON.stringify({
       id: productId,
@@ -108,7 +108,11 @@ function updateDistance() {
     simulateButton.disabled = true
     productMarker.unbindTooltip()
     websocket.send(
-      JSON.stringify({ status: 'delivered', product_id: productId })
+      JSON.stringify({
+        type: 'updateStatus',
+        status: 'delivered',
+        product_id: productId,
+      })
     )
   } else {
     deliverMessage.textContent = 'Pedido em rota de entrega...'
@@ -184,9 +188,13 @@ function manageWebsocketConnection(interval) {
           .openTooltip()
       }
 
-      isSimulating
-        ? (simulateButton.disabled = true)
-        : (simulateButton.disabled = false)
+      if (isSimulating) {
+        simulateButton.disabled = true
+        resetProductCoordsButton.disabled = true
+      } else {
+        simulateButton.disabled = false
+        resetProductCoordsButton.disabled = false
+      }
     } else {
       clientsContainer.innerHTML = ''
 
@@ -231,6 +239,7 @@ simulateButton.addEventListener('click', () => {
   if (websocket.readyState === websocket.OPEN) {
     simulateMovement(10)
     simulateButton.disabled = true
+    resetProductCoordsButton.disabled = true
     isSimulating = true
     websocket.send(JSON.stringify({ isSimulating: 1 }))
   }
