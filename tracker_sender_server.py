@@ -26,6 +26,7 @@ def broadcast_product_coords(product: Product):
         "lng": product.lng,
         "name": product.name,
         "isSimulating": product.isSimulating,
+        "status": product.status,
     }
     broadcast(product.trackers_connected, json.dumps(coords))
 

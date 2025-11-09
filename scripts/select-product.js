@@ -13,6 +13,7 @@ let polyline = null
 let userCoords = { lat: '', lng: '' }
 let productCoords = { lat: '', lng: '' }
 let distance = null
+let productStatus = null
 let isSimulating = false
 
 function initMap() {
@@ -103,7 +104,7 @@ function updateDistance() {
     distance.toFixed(2)
   ).toLocaleString('pt-BR')} km`
 
-  if (distance == 0) {
+  if (distance == 0 && productStatus != 'delivered') {
     deliverMessage.textContent = 'Seu pedido foi entregue!'
     simulateButton.disabled = true
     productMarker.unbindTooltip()
@@ -172,6 +173,8 @@ function manageWebsocketConnection(interval) {
       productCoords.lat = message.lat
       productCoords.lng = message.lng
       isSimulating = message.isSimulating
+      productStatus = message.status
+      console.log(productStatus)
 
       const productName = message.name
       // garante que os marcadores e linhas serão exibidas com as informações de localização do usuario
