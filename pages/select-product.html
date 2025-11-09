@@ -1,60 +1,62 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../styles/select-product.css" />
+    <title>Selecione o Produto</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="../styles/select-product.css" />
-  <title>Selecione o Produto</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-</head>
+  <body>
+    <header>
+      <h1>Sistema de Rastreamento em Tempo Real</h1>
+      <p>
+        Este projeto utiliza <strong>WebSocket</strong> para monitorar, em tempo
+        real, as rotas de produtos cadastrados no servidor. Ao selecionar um
+        produto, o mapa abaixo exibe sua rota atual.
+      </p>
+    </header>
 
-<body>
-  <header>
-    <h1>Sistema de Rastreamento em Tempo Real</h1>
-    <p>
-      Este projeto utiliza <strong>WebSocket</strong> para monitorar, em tempo
-      real, as rotas de produtos cadastrados no servidor. Ao selecionar um
-      produto, o mapa abaixo exibe sua rota atual.
-    </p>
-  </header>
+    <main>
+      <section class="clients-panel">
+        <h2>Selecione um Produto</h2>
+        <p id="nullProduct">Sem produtos disponíveis</p>
+        <div class="clients-container"></div>
+      </section>
 
-  <main>
-    <section class="clients-panel">
-      <h2>Selecione um Produto</h2>
-      <p id="nullProduct">Sem produtos disponíveis</p>
-      <div class="clients-container"></div>
-    </section>
+      <section class="map-section">
+        <h2>Mapa da Rota</h2>
+        <div id="map" class="map"></div>
+        <p class="hint">Selecione um produto acima para visualizar a rota.</p>
+        <div class="simulate-container">
+          <button class="simulate-button">Simular</button>
+          <button class="reset-coords-button">Reiniciar Coordenadas</button>
+        </div>
+        <div class="distance"></div>
+        <div class="deliver-message"></div>
+      </section>
 
-    <section class="map-section">
-      <h2>Mapa da Rota</h2>
-      <div id="map" class="map"></div>
-      <p class="hint">Selecione um produto acima para visualizar a rota.</p>
-      <div class="simulate-container">
-        <button>Simular</button>
-      </div>
-      <div class="distance"></div>
-      <div class="deliver-message"></div>
-    </section>
+      <section class="team-section">
+        <h2>Equipe de Desenvolvimento</h2>
+        <div class="team-members">
+          <div class="member">Eric Silva Patricio — Desenvolvedor Backend</div>
+          <div class="member">Felipe Martins — Frontend</div>
+          <div class="member">Henrique Veras — Frontend</div>
+          <div class="member">Jordan Carvalho — Design UI/UX</div>
+          <div class="member">José Maranhão — Frontend</div>
+        </div>
+      </section>
+    </main>
 
-    <section class="team-section">
-      <h2>Equipe de Desenvolvimento</h2>
-      <div class="team-members">
-        <div class="member">Eric Silva Patricio — Desenvolvedor Backend</div>
-        <div class="member">Felipe Martins — Frontend</div>
-        <div class="member">Henrique Veras — Frontend</div>
-        <div class="member">Jordan Carvalho — Design UI/UX</div>
-        <div class="member">José Maranhão — Frontend</div>
-      </div>
-    </section>
-  </main>
+    <footer>
+      <p>© 2025 Sistema de Rastreamento • Todos os direitos reservados.</p>
+    </footer>
 
-  <footer>
-    <p>© 2025 Sistema de Rastreamento • Todos os direitos reservados.</p>
-  </footer>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="../scripts/select-product.js"></script>
-</body>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../scripts/select-product.js"></script>
+  </body>
 </html>

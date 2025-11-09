@@ -19,6 +19,15 @@ def getProductsIndex():
     return list(range(len(PRODUCTS)))
 
 
+def broadcast_product_coords(product: Product):
+    coords = {
+        "lat": product.lat,
+        "lng": product.lng,
+        "isSimulating": product.isSimulating,
+    }
+    broadcast(product.trackers_connected, json.dumps(coords))
+
+
 def updateSelectList():
     products_index_list = getProductsIndex()
     # MUDANÇA: Simplificado, pois agora é tudo 'Product'
@@ -76,7 +85,6 @@ async def handler(websocket):
                 PRODUCTS.append(New_product)
                 PRODUCTS_WB.add(websocket)
 
-                
                 print(f"Sender (Produto {len(PRODUCTS)-1}) {product_name} connected!\n")
 
                 # atualiza a lista de conexões
@@ -130,26 +138,13 @@ async def handler(websocket):
 
                 if product_id is not None:
                     product = PRODUCTS[product_id]
-                    
-                    # NOVO: Se for a primeira coordenada de um
-                    # novo produto, salva como a original.
-                    if not product.has_set_original:
-                        product.original_lat = data["lat"]
-                        product.original_lng = data["lng"]
-                        product.has_set_original = True
-                        print(f"Localização original definida para {product.name}\n")
-                    
+
                     # Atualiza a localização ATUAL
                     product.lat = data["lat"]
                     product.lng = data["lng"]
-                    
-                    coords = {
-                        "lat": product.lat,
-                        "lng": product.lng,
-                        "isSimulating": product.isSimulating,
-                    }
-                    print("Broadcasting coords:", coords, "\n")
-                    broadcast(product.trackers_connected, json.dumps(coords))
+
+                    broadcast_product_coords(product)
+                    print("Broadcasting coords:", data["lat"], data["lng"], "\n")
                 continue
 
             if "status" in data and "product_id" in data:
@@ -162,7 +157,7 @@ async def handler(websocket):
 
             if "isSimulating" in data:
                 print("Mensagem 'isSimulating' recebida:", data.get("isSimulating"))
-                
+
                 product_id = None
                 if "product_id" in data:
                     product_id = int(data.get("product_id"))
@@ -179,8 +174,10 @@ async def handler(websocket):
                     product = PRODUCTS[product_id]
                     new_sim_status = data.get("isSimulating")
                     product.isSimulating = new_sim_status
-                    
-                    print(f"Produto {product_id} ('{product.name}') simulação: {product.isSimulating}\n")
+
+                    print(
+                        f"Produto {product_id} ('{product.name}') simulação: {product.isSimulating}\n"
+                    )
 
                     # NOVO: Se a simulação PAROU (== 0)
                     if new_sim_status == 0:
@@ -188,7 +185,7 @@ async def handler(websocket):
                         # Restaura a localização atual para a original
                         product.lat = product.original_lat
                         product.lng = product.original_lng
-                        
+
                         # Avisa os trackers que a posição foi resetada
                         coords = {
                             "lat": product.lat,
@@ -196,11 +193,24 @@ async def handler(websocket):
                             "isSimulating": 0,
                         }
                         broadcast(product.trackers_connected, json.dumps(coords))
-                
-                else:
-                    print("Erro: Não foi possível identificar o produto para 'isSimulating'.\n")
-                
                 continue
+
+            if data.get("type") == "reset":
+                try:
+                    product_id = int(data.get("id"))
+
+                    product = PRODUCTS[product_id]
+                    if not product.was_moved():
+                        print("Product was not moved. Wait until he moves.")
+                        continue
+
+                    product.reset_coords()
+                    broadcast_product_coords(product)
+                    print("Coords reseted", product.lat, product.lng)
+                except ValueError:
+                    print("Error converting ID - reset")
+                finally:
+                    continue
 
     finally:
         # (sem mudança)
@@ -213,7 +223,7 @@ async def handler(websocket):
         if product_to_remove:
             PRODUCTS.remove(product_to_remove)
             updateSelectList()
-            
+
         TRACKERS.discard(websocket)
         SELECT_PRODUCT.discard(websocket)
 
@@ -223,7 +233,7 @@ async def main():
         sockname = list(server.sockets)[0].getsockname()
         host = sockname[0]
         port = sockname[1]
-        print(f"🚀 Servidor WebSocket conectado em ws://{host}:{port}")                       
+        print(f"🚀 Servidor WebSocket conectado em ws://{host}:{port}")
         await asyncio.Future()
 
 

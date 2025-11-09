@@ -3,7 +3,8 @@ const clientsContainer = document.querySelector('.clients-container')
 const RECONNECT_INTERVAL = 2000
 const params = new URLSearchParams(window.location.search)
 const productId = params.get('id')
-const simulateButton = document.querySelector('.simulate-container button')
+const simulateButton = document.querySelector('.simulate-button')
+const resetProductCoordsButton = document.querySelector('.reset-coords-button')
 let websocket = null
 let map = initMap()
 let userMarker = null
@@ -43,6 +44,16 @@ function simulateMovement(steps) {
     i++
     if (i >= steps) clearInterval(interval)
   }, 1000)
+}
+
+function resetProductCoords() {
+  console.log('Reset')
+  websocket.send(
+    JSON.stringify({
+      id: productId,
+      type: 'reset',
+    })
+  )
 }
 
 function calcDistance(pos1, pos2) {
@@ -146,6 +157,7 @@ function manageWebsocketConnection(interval) {
         })
       )
       simulateButton.style.display = 'inline-block'
+      resetProductCoordsButton.style.display = 'inline-block'
     }
     nullProducts.remove()
   })
@@ -224,6 +236,9 @@ simulateButton.addEventListener('click', () => {
   }
 })
 
+resetProductCoordsButton.addEventListener('click', resetProductCoords)
+
 simulateButton.style.display = 'none'
+resetProductCoordsButton.style.display = 'none'
 
 manageWebsocketConnection(RECONNECT_INTERVAL)

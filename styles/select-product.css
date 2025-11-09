@@ -73,7 +73,7 @@ header p {
   gap: 16px;
 }
 
-.simulate-container button{
+.simulate-container button {
   background-color: green;
   border: none;
   border-radius: var(--radius);
@@ -82,7 +82,7 @@ header p {
   text-align: center;
   text-decoration: white;
   color: white;
-  width: 100px;
+  min-width: 100px;
   font-weight: bold;
   font-size: 15px;
   cursor: pointer;
@@ -160,7 +160,7 @@ header p {
 .team-members {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;  
+  justify-content: center;
   gap: 16px;
   margin-top: 16px;
 }
@@ -228,5 +228,4 @@ footer {
     max-width: 300px;
     margin: 0 auto;
   }
-  
-  }
+}

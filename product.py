@@ -6,9 +6,14 @@ class Product:
         self.lng = lng
         self.original_lat = lat
         self.original_lng = lng
-        self.has_set_original = (lat != 0 or lng != 0)
         self.websocket = websocket
         self.trackers_connected = set()
-
         self.isSimulating = 0
         self.websocket = None
+
+    def was_moved(self):
+        return self.lat != self.original_lat or self.lng != self.original_lng
+
+    def reset_coords(self):
+        self.lat = self.original_lat
+        self.lng = self.original_lng
