@@ -89,6 +89,11 @@ header p {
   margin-bottom: 10px;
 }
 
+.simulate-container button:disabled {
+  cursor: not-allowed;
+  background-color: rgb(90, 139, 90);
+}
+
 .client {
   background: linear-gradient(
     180deg,
